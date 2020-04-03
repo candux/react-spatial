@@ -197,8 +197,10 @@ class Geolocation extends PureComponent {
           circleStyle,
         ];
       });
-    } else {
+    } else if (colorOrStyleFunc instanceof Style) {
       feature.setStyle(colorOrStyleFunc);
+    } else {
+      feature.setStyle(colorOrStyleFunc(feature));
     }
 
     this.layer.getSource().clear();
