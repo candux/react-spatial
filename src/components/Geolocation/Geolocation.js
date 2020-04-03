@@ -43,6 +43,11 @@ const propTypes = {
   noCenterAfterDrag: PropTypes.bool,
 
   /**
+   * If true, the map will constantly recenter to the current Position
+   */
+  alwaysRecenterToPosition: PropTypes.bool,
+
+  /**
    * Color (Number array with rgb values) or style function.
    * If a color is given, the style is animated.
    */
@@ -57,6 +62,7 @@ const defaultProps = {
   children: <FaRegDotCircle focusable={false} />,
   onError: () => {},
   noCenterAfterDrag: false,
+  alwaysRecenterToPosition: true,
   colorOrStyleFunc: [235, 0, 0],
 };
 
@@ -72,10 +78,10 @@ class Geolocation extends PureComponent {
       source: new VectorSource(),
     });
 
-    this.isCentered = true;
+    this.recenterToPostion = true;
     if (noCenterAfterDrag) {
       map.on('pointerdrag', () => {
-        this.isCentered = false;
+        this.recenterToPostion = false;
       });
     }
 
@@ -113,9 +119,14 @@ class Geolocation extends PureComponent {
   }
 
   deactivate() {
+    const { noCenterAfterDrag } = this.props;
     window.clearInterval(this.interval);
     this.layer.setMap(null);
     navigator.geolocation.clearWatch(this.watch);
+
+    if (!noCenterAfterDrag) {
+      this.recenterToPostion = true;
+    }
 
     this.setState({
       active: false,
@@ -123,8 +134,8 @@ class Geolocation extends PureComponent {
     this.point = undefined;
   }
 
-  update({ coords: { latitude, longitude } }) {
-    const { map } = this.props;
+  activate(position: { latitude, longitude }) {
+    const { map, alwaysRecenterToPosition } = this.props;
 
     const projection = map.getView().getProjection().getCode();
     const position = transform([longitude, latitude], 'EPSG:4326', projection);
@@ -136,8 +147,14 @@ class Geolocation extends PureComponent {
       this.point.setCoordinates(position);
     }
 
-    if (this.isCentered) {
-      map.getView().setCenter(position);
+    const point = new Point(pos);
+    this.highlight(point);
+    this.layer.setMap(map);
+    if (this.recenterToPostion) {
+      map.getView().setCenter(pos);
+      if (!alwaysRecenterToPosition) {
+        this.recenterToPostion = false;
+      }
     }
 
     this.setState({ active: true });
