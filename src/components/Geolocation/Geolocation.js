@@ -134,7 +134,7 @@ class Geolocation extends PureComponent {
     this.point = undefined;
   }
 
-  activate(position: { latitude, longitude }) {
+  update({ coords: { latitude, longitude } }) {
     const { map, alwaysRecenterToPosition } = this.props;
 
     const projection = map.getView().getProjection().getCode();
@@ -147,11 +147,8 @@ class Geolocation extends PureComponent {
       this.point.setCoordinates(position);
     }
 
-    const point = new Point(pos);
-    this.highlight(point);
-    this.layer.setMap(map);
     if (this.recenterToPostion) {
-      map.getView().setCenter(pos);
+      map.getView().setCenter(position);
       if (!alwaysRecenterToPosition) {
         this.recenterToPostion = false;
       }
